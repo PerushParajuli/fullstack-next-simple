@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sprout, LogInIcon, HomeIcon } from "lucide-react";
 import { ModeToggle } from "./ModeToggle";
+import {SignIn} from "@stackframe/stack";
 
 export default function Navbar() {
   return (
@@ -40,7 +41,7 @@ export default function Navbar() {
             </Button>
 
             <Button variant={"ghost"} asChild>
-              <Link href={"/signin"} className="flex items-center gap-x-2">
+              <Link href={app.signIn} className="flex items-center gap-x-2">
                 <LogInIcon className="w-4 h-4" />
                 <span className="hidden md:inline">Sign In</span>
               </Link>
