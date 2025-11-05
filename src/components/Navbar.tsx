@@ -1,11 +1,17 @@
+import { getUserDetails } from "@/actions/user.action";
+import { Button } from "@/components/ui/button";
+import { stackServerApp } from "@/stack/server";
+import { HomeIcon, LogInIcon, LogOutIcon, Sprout } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Sprout, LogInIcon, HomeIcon } from "lucide-react";
 import { ModeToggle } from "./ModeToggle";
-import {SignIn} from "@stackframe/stack";
+import { UserButton } from "@stackframe/stack";
 
-export default function Navbar() {
+export default async function Navbar() {
+  const user = await stackServerApp.getUser();
+  const app = stackServerApp.urls;
+  const userProfile = await getUserDetails(user?.id);
+
   return (
     <nav className="sticky top-0 w-full border-b z-50">
       <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
@@ -39,15 +45,25 @@ export default function Navbar() {
                 <span className="hidden md:inline">Home</span>
               </Link>
             </Button>
-
-            <Button variant={"ghost"} asChild>
-              <Link href={app.signIn} className="flex items-center gap-x-2">
-                <LogInIcon className="w-4 h-4" />
-                <span className="hidden md:inline">Sign In</span>
-              </Link>
-            </Button>
           </div>
-          <ModeToggle />
+
+          {/* Sign In Button */}
+          <div>
+            {user ? null : (
+              <Button variant={"ghost"} asChild>
+                <Link href={app.signIn} className="flex items-center gap-x-2">
+                  <LogInIcon className="w-4 h-4" />
+                  <span className="hidden md:inline">Sign In</span>
+                </Link>
+              </Button>
+            )}
+          </div>
+
+          {/* Night mode and User Indicator */}
+          <div className={`${user ? "flex items-center gap-x-2" : ""}`}>
+            <ModeToggle />
+            {user && <UserButton />}
+          </div>
         </div>
       </div>
     </nav>
