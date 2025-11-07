@@ -13,7 +13,7 @@ export default async function Navbar() {
   const userProfile = await getUserDetails(user?.id);
 
   return (
-    <nav className="sticky top-0 w-full border-b z-50">
+    <nav className="sticky top-0 w-full border-b z-50 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-x-2">
@@ -28,8 +28,8 @@ export default async function Navbar() {
             Plantshelf
           </Link>
         </div>
-        {/* Nav Items */}
 
+        {/* Nav Items */}
         <div className="flex items-center gap-x-2 md:gap-x-4">
           <div className="flex items-center gap-x-2 md:gap-x-4 font-semibold">
             <Button variant={"ghost"} asChild>
