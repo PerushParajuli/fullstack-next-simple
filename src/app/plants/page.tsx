@@ -6,6 +6,7 @@ import { SignUp } from "@stackframe/stack";
 export default async function Page() {
   const user = await stackServerApp.getUser();
   const app = stackServerApp.urls;
+
   return (
     <>
       {user ? (

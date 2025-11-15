@@ -1,4 +1,5 @@
 "use client";
+
 import {
   Table,
   TableBody,
@@ -13,96 +14,35 @@ import { Input } from "./ui/input";
 import { ComboBox } from "./ui/ComboBox";
 import { Search, Trash2Icon } from "lucide-react";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { PlantType } from "@/lib/types";
+import { getPlants } from "@/actions/plant.action";
+import { useRouter } from "next/navigation";
 
-type Plant = {
-  id: number;
-  name: string;
-  category: string;
-  price: number;
-  stock: number;
-};
+import { AddPlant } from "./PlantForm";
 
 export default function InventoryTable() {
+  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [plants, setPlants] = useState<PlantType[]>([]);
 
-  const plants: Plant[] = [
-    {
-      id: 1,
-      name: "Sandpaper Oak",
-      category: "Fagaceae",
-      price: 149.99,
-      stock: 82,
-    },
-    {
-      id: 2,
-      name: "Tomentose Groutiella Moss",
-      category: "Orthotrichaceae",
-      price: 3.29,
-      stock: 11,
-    },
-    {
-      id: 3,
-      name: "Drummond's Wild Petunia",
-      category: "Acanthaceae",
-      price: 4.19,
-      stock: 66,
-    },
-    {
-      id: 4,
-      name: "Tuckermannopsis Lichen",
-      category: "Parmeliaceae",
-      price: 4.79,
-      stock: 30,
-    },
-    {
-      id: 5,
-      name: "Spontaneous Barley",
-      category: "Poaceae",
-      price: 3.99,
-      stock: 72,
-    },
-    {
-      id: 6,
-      name: "Common Dandelion",
-      category: "Asteraceae",
-      price: 19.99,
-      stock: 3,
-    },
-    {
-      id: 7,
-      name: "Auwahi Melicope",
-      category: "Rutaceae",
-      price: 24.99,
-      stock: 5,
-    },
-    {
-      id: 8,
-      name: "Oahu Wild Coffee",
-      category: "Rubiaceae",
-      price: 15.99,
-      stock: 7,
-    },
-    {
-      id: 9,
-      name: "Fairbanks Annual Indian Paintbrush",
-      category: "Scrophulariaceae",
-      price: 2.99,
-      stock: 80,
-    },
-    {
-      id: 10,
-      name: "Huachuca Mountain Morning-glory",
-      category: "Convolvulaceae",
-      price: 5.79,
-      stock: 99,
-    },
-  ];
+  useEffect(() => {
+    const fetchPlants = async () => {
+      const data = await getPlants(searchTerm);
+      setPlants(data.userPlants);
+    };
+    fetchPlants();
+  }, [searchTerm]);
+
+  // Filter plants by category (if selected)
+  const filteredPlants = selectedCategory
+    ? plants?.filter((plant) => plant.category === selectedCategory)
+    : plants;
 
   return (
     <div className="px-8 py-4 w-full">
-      <div className="">
+      <div className="flex items-center justify-between">
         {/* Search and filer */}
         <div className="w-full flex items-center gap-2 py-4">
           <div className="relative max-w-sm w-full">
@@ -122,41 +62,56 @@ export default function InventoryTable() {
         </div>
 
         {/* Add new Plants */}
+        <AddPlant />
       </div>
 
       <div className="grid w-full [&>div]:max-h-screen [&>div]:border [&>div]:rounded">
         <Table>
           <TableHeader>
-            <TableRow className="*:whitespace-nowrap sticky top-0 bg-background after:content-[''] after:inset-x-0 after:h-px after:bg-border after:absolute after:bottom-0">
+            <TableRow className="shadow-none *:whitespace-nowrap sticky top-0 bg-background after:content-[''] after:inset-x-0 after:h-px after:bg-border after:absolute after:bottom-0">
               <TableHead>Name</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Price (NPR)</TableHead>
               <TableHead>Stock Quantity</TableHead>
               <TableHead>Options</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="overflow-hidden">
-            {plants.map((plant) => (
-              <TableRow
-                key={plant.id}
-                className="odd:bg-muted/50 *:whitespace-nowrap"
-              >
-                <TableCell className="font-medium">{plant.name}</TableCell>
-                <TableCell>{plant.category}</TableCell>
-                <TableCell>{plant.price}</TableCell>
-                <TableCell>{plant.stock}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-x-2">
-                    <Button variant={"default"} size={"sm"}>
-                      Edit
-                    </Button>
-                    <Button variant={"destructive"} size={"icon-sm"}>
-                      <Trash2Icon />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+            {filteredPlants.map((plant) => {
+              const slugifiledName = plant.name
+                .toLowerCase()
+                .replace(/\s+/g, "-");
+              const slug = `${plant.id}--${slugifiledName}`;
+              const plantUrl = `/plants/${slug}`;
+
+              return (
+                <TableRow
+                  key={plant.id}
+                  className="odd:bg-muted/50 *:whitespace-nowrap"
+                >
+                  <TableCell
+                    className="font-medium"
+                    onClick={() => router.push(plantUrl)}
+                  >
+                    {plant.name}
+                  </TableCell>
+                  <TableCell>{plant.category}</TableCell>
+                  <TableCell>{plant.price}</TableCell>
+                  <TableCell>{plant.stock}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-x-2">
+                      <Button variant={"default"} size={"sm"}>
+                        Edit
+                      </Button>
+                      <Button variant={"destructive"} size={"icon-sm"}>
+                        <Trash2Icon />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

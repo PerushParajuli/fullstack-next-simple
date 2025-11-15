@@ -1,4 +1,4 @@
 export default function Loading() {
   // You can use any loading indicator here
-  return <>Loading...</>;
+  return <div className="text-lg">Loading. . .</div>;
 }
