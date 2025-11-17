@@ -20,18 +20,39 @@ import { useState } from "react";
 import { Textarea } from "./ui/textarea";
 import { addNewPlant } from "@/actions/plant.action";
 
-export function AddPlant() {
+export function AddPlant({ onPlantAdded }: { onPlantAdded: () => void }) {
+  const [requestId] = useState(() => crypto.randomUUID()); // generated a unique ID when dialouge opens
   const [category, selectedCategory] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [open, setOpen] = useState<boolean>(false);
+
+  // ensures that only one submission is made at a time
+  const handleSubmit = async (formData: FormData) => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    formData.set("requestId", requestId);
+
+    const result = await addNewPlant(formData);
+    setIsSubmitting(false);
+
+    if (result?.success) {
+      setOpen(false);
+      onPlantAdded();
+    }
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
+        <Button variant="outline" disabled={open}>
           <Sprout className="text-green-800 hover:cursor-pointer" /> Add Plant
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         {/* Actions to be taken */}
-        <form action={addNewPlant} encType="multipart/form-data">
+        <form action={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Add a Plant</DialogTitle>
             <DialogDescription>
@@ -92,7 +113,7 @@ export function AddPlant() {
               </div>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter onClick={(e) => e.stopPropagation()}>
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>

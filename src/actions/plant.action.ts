@@ -24,7 +24,7 @@ export async function getPlants(searchTerm?: String) {
       where: whereClause,
     });
 
-    revalidatePath("/"); // This will cache the plants in cache. So will not need to fetch again and again
+    revalidatePath("/plants"); // This will cache the plants in cache. So will not need to fetch again and again
     return { success: true, userPlants };
   } catch (error) {
     console.log(`Error in getting Plants: ${error}`);
@@ -33,7 +33,6 @@ export async function getPlants(searchTerm?: String) {
 }
 
 // Returns the plant data as per the Id
-
 export async function getPlantById(id: string) {
   return await prisma.plant.findUnique({
     where: { id },
@@ -48,43 +47,78 @@ export async function addNewPlant(formData: FormData) {
     throw new Error("User not authenticated");
   }
 
-  // Verifies that the ID, even if returned by the session actually exists in database.
-  const existingUser = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true },
-  });
-
-  if (!existingUser) {
-    // This handles the integrity risk created by using 'references: []'
-    throw new Error("Referenced User does not exist. Cannot create plant.");
-  }
-
   const name = formData.get("name") as string;
   const category = formData.get("category") as string;
+  const price = Number(formData.get("price"));
+  const stock = Number(formData.get("stock"));
+  const description = formData.get("description") as string | null;
+  const requestId = formData.get("requestId") as string;
+
+  if (!requestId) throw new Error("Request Id is not set");
 
   // Server-side safety check
   if (!category) {
     throw new Error("Category is required");
   }
 
-  const price = Number(formData.get("price"));
-  const stock = Number(formData.get("stock"));
+  if (!name || typeof name !== "string" || name.trim().length === 0) {
+    throw new Error("Name is required");
+  }
 
-  const description = formData.get("description") as string | null;
+  if (!price) {
+    throw new Error("Price is required");
+  }
 
-  console.log("Attempting to create Plant with userId:", userId); // <-- ADD THIS LINE
+  if (!stock) {
+    throw new Error("Stock is required");
+  }
 
-  // Database Write (ONLY proceeds if user exists)
-  const plant = await prisma.plant.create({
-    data: {
-      name,
-      category,
-      price,
-      stock,
-      description,
-      userId,
-    },
-  });
+  try {
+    // Database Write (ONLY proceeds if user exists and there is no duplicated data)
+    const plant = await prisma.plant.create({
+      data: {
+        name,
+        category,
+        price,
+        stock,
+        description,
+        userId,
+        requestId,
+      },
+    });
 
-  revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    if (error.code === "P2002") {
+      return { success: true };
+    }
+    throw error;
+  }
+
+  revalidatePath("/plants");
 }
+
+export async function deletePlant(id: string) {
+  try {
+    const currentUserId = await getUserId();
+
+    const whereClause: any = {
+      userId: currentUserId,
+    };
+
+    if (id) {
+      whereClause.id = id;
+    }
+
+    await prisma.plant.delete({
+      where: whereClause,
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete plant:", error);
+    return { success: false, error: "Unable to delete plant" };
+  }
+}
+
+export async function editPlant(formData: FormData) {}

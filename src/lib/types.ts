@@ -4,6 +4,7 @@ export type PlantType = {
   category: string;
   price: number;
   stock: number;
+  requestId: string;
 
   description?: string | null;
   createdAt?: Date;
@@ -11,4 +12,3 @@ export type PlantType = {
   userId?: string;
   imageUrl?: string | null;
 };
-

@@ -1,0 +1,121 @@
+"use server";
+
+import { prisma } from "@/lib/prisma";
+import { getUserId } from "@/actions/user.action";
+import { revalidatePath } from "next/cache";
+import { error } from "console";
+import { AwardIcon } from "lucide-react";
+
+// Returns all the plants related to the user that matches searchTerm
+export async function getPlants(searchTerm?: String) {
+  try {
+    const currentUserId = await getUserId();
+
+    const whereClause: any = {
+      userId: currentUserId,
+    };
+
+    if (searchTerm) {
+      whereClause.name = {
+        contains: searchTerm,
+        mode: "insensitive",
+      };
+    }
+
+    const userPlants = await prisma.plant.findMany({
+      where: whereClause,
+    });
+
+    revalidatePath("/plants"); // This will cache the plants in cache. So will not need to fetch again and again
+    return { success: true, userPlants };
+  } catch (error) {
+    console.log(`Error in getting Plants: ${error}`);
+    throw new Error("Failed to fetch Plants");
+  }
+}
+
+// Returns the plant data as per the Id
+export async function getPlantById(id: string) {
+  return await prisma.plant.findUnique({
+    where: { id },
+  });
+}
+
+export async function addNewPlant(formData: FormData) {
+  const userId = await getUserId();
+
+  // Initial Authentication Check
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
+
+  const name = formData.get("name") as string;
+  const category = formData.get("category") as string;
+  const price = Number(formData.get("price"));
+  const stock = Number(formData.get("stock"));
+  const description = formData.get("description") as string | null;
+
+  // Server-side safety check
+  if (!category) {
+    throw new Error("Category is required");
+  }
+
+  if (!name || typeof name !== "string" || name.trim().length === 0) {
+    throw new Error("Name is required");
+  }
+
+  if (!price) {
+    throw new Error("Price is required");
+  }
+
+  if (!stock) {
+    throw new Error("Stock is required");
+  }
+
+  const plant = await prisma.plant.findMany
+
+
+
+  // Database Write (ONLY proceeds if user exists and there is no duplicated data)
+  const plant = await prisma.plant.create({
+    data: {
+      name,
+      category,
+      price,
+      stock,
+      description,
+      userId,
+    },
+  });
+
+  return { success: true };
+
+  revalidatePath("/plants");
+}
+
+export async function deletePlant(id: string) {
+  try {
+    const currentUserId = await getUserId();
+
+    const whereClause: any = {
+      userId: currentUserId,
+    };
+
+    if (id) {
+      whereClause.id = id;
+    }
+
+    await prisma.plant.delete({
+      where: whereClause,
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete plant:", error);
+    return { success: false, error: "Unable to delete plant" };
+  }
+}
+
+export async function editPlant(formData: FormData) {
+
+}

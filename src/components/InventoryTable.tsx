@@ -12,11 +12,11 @@ import {
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { ComboBox } from "./ui/ComboBox";
-import { Search, Trash2Icon } from "lucide-react";
+import { Search, Trash2Icon, PencilIcon } from "lucide-react";
 
 import { useEffect, useState } from "react";
 import { PlantType } from "@/lib/types";
-import { getPlants } from "@/actions/plant.action";
+import { deletePlant, getPlants } from "@/actions/plant.action";
 import { useRouter } from "next/navigation";
 
 import { AddPlant } from "./PlantForm";
@@ -27,11 +27,12 @@ export default function InventoryTable() {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [plants, setPlants] = useState<PlantType[]>([]);
 
+  const fetchPlants = async () => {
+    const data = await getPlants(searchTerm);
+    setPlants(data.userPlants);
+  };
+
   useEffect(() => {
-    const fetchPlants = async () => {
-      const data = await getPlants(searchTerm);
-      setPlants(data.userPlants);
-    };
     fetchPlants();
   }, [searchTerm]);
 
@@ -39,6 +40,18 @@ export default function InventoryTable() {
   const filteredPlants = selectedCategory
     ? plants?.filter((plant) => plant.category === selectedCategory)
     : plants;
+
+  const handleDelete = async (id: string) => {
+    const confirmed = confirm("Are you sure you want to delete this plant?");
+    if (!confirmed) return;
+
+    const res = await deletePlant(id);
+
+    if (res.success) {
+      // update UI and remove the current plant associated with this ID
+      setPlants((prev) => prev.filter((p) => p.id !== id));
+    } else alert("Failed to delete Plant.");
+  };
 
   return (
     <div className="px-8 py-4 w-full">
@@ -62,7 +75,7 @@ export default function InventoryTable() {
         </div>
 
         {/* Add new Plants */}
-        <AddPlant />
+        <AddPlant onPlantAdded={() => fetchPlants()} />
       </div>
 
       <div className="grid w-full [&>div]:max-h-screen [&>div]:border [&>div]:rounded">
@@ -72,8 +85,8 @@ export default function InventoryTable() {
               <TableHead>Name</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Price (NPR)</TableHead>
-              <TableHead>Stock Quantity</TableHead>
-              <TableHead>Options</TableHead>
+              <TableHead>Stock Quantity</TableHead>{" "}
+              <TableHead>Description</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -99,15 +112,26 @@ export default function InventoryTable() {
                   <TableCell>{plant.category}</TableCell>
                   <TableCell>{plant.price}</TableCell>
                   <TableCell>{plant.stock}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-x-2">
-                      <Button variant={"default"} size={"sm"}>
-                        Edit
-                      </Button>
-                      <Button variant={"destructive"} size={"icon-sm"}>
-                        <Trash2Icon />
-                      </Button>
-                    </div>
+                  <TableCell
+                    className="max-w-[200px] truncate"
+                    title={plant.description ?? ""}
+                  >
+                    {plant.description || "-"}
+                  </TableCell>
+
+                  <TableCell className="w-full flex justify-end items-center gap-x-2">
+                    <Button variant="outline" size="default" title="Edit">
+                      <PencilIcon className="h-4 w-4" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="icon-sm"
+                      title="Delete"
+                      onClick={() => handleDelete(plant.id)}
+                    >
+                      <Trash2Icon className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               );
