@@ -21,6 +21,8 @@ import { useRouter } from "next/navigation";
 
 import { PlantFormDialog } from "./PlantForm";
 
+import { toast } from "sonner";
+
 export default function InventoryTable() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -52,7 +54,8 @@ export default function InventoryTable() {
     if (res.success) {
       // update UI and remove the current plant associated with this ID
       setPlants((prev) => prev.filter((p) => p.id !== id));
-    } else alert("Failed to delete Plant.");
+      toast.success("Plant deleted.");
+    } else toast.info("Failed to delete Plant");
   };
 
   const handleEdit = (plant: PlantType) => {

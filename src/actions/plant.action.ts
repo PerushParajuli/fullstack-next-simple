@@ -103,12 +103,11 @@ export async function addNewPlant(formData: FormData) {
       },
     });
 
+    revalidatePath("/plants");
     return { success: true };
   } catch (error: any) {
-    throw error;
+    return { success: false };
   }
-
-  revalidatePath("/plants");
 }
 
 export async function updatePlant(formData: FormData) {
@@ -158,12 +157,11 @@ export async function updatePlant(formData: FormData) {
       },
     });
 
+    revalidatePath("/plants");
     return { success: true };
   } catch (error: any) {
-    throw error;
+    return { success: false };
   }
-
-  revalidatePath("/plants");
 }
 
 export async function deletePlant(id: string) {

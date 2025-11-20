@@ -20,6 +20,7 @@ import { useState } from "react";
 import { Textarea } from "./ui/textarea";
 import { addNewPlant, updatePlant } from "@/actions/plant.action";
 import { PlantType } from "@/lib/types";
+import { toast } from "sonner";
 
 export function PlantFormDialog({
   onPlantSaved,
@@ -45,10 +46,20 @@ export function PlantFormDialog({
 
     if (isEditing) {
       formData.set("id", initialPlant!.id); // I promise initialPlant is NOT null here.
-      await updatePlant(formData);
+      const result = await updatePlant(formData);
+      if (result.success) {
+        toast.success("Plant Updated.");
+      } else {
+        toast.error("Could not updated the plant");
+      }
     } else {
       formData.set("requestId", crypto.randomUUID());
       const result = await addNewPlant(formData);
+      if (result.success) {
+        toast.success("Plant Added.");
+      } else {
+        toast.error("Could not Add the plant");
+      }
     }
     setIsSubmitting(false);
     onOpenChange(false);
