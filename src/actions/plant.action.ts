@@ -75,6 +75,22 @@ export async function addNewPlant(formData: FormData) {
 
   try {
     // Database Write (ONLY proceeds if user exists and there is no duplicated data)
+    const existing = await prisma.plant.findUnique({
+      where: {
+        userId_name_category: {
+          userId,
+          name,
+          category,
+        },
+      },
+    });
+
+    if (existing) {
+      throw new Error(
+        "A plant with this name and category already exists for this user"
+      );
+    }
+
     const plant = await prisma.plant.create({
       data: {
         name,
@@ -89,9 +105,61 @@ export async function addNewPlant(formData: FormData) {
 
     return { success: true };
   } catch (error: any) {
-    if (error.code === "P2002") {
-      return { success: true };
-    }
+    throw error;
+  }
+
+  revalidatePath("/plants");
+}
+
+export async function updatePlant(formData: FormData) {
+  const userId = await getUserId();
+
+  // Initial Authentication Check
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
+
+  const id = formData.get("id") as string;
+  const name = formData.get("name") as string;
+  const category = formData.get("category") as string;
+  const price = Number(formData.get("price"));
+  const stock = Number(formData.get("stock"));
+  const description = formData.get("description") as string | null;
+
+  if (!id) throw new Error("Plant Id is required");
+
+  // Server-side safety check
+  if (!category) {
+    throw new Error("Category is required");
+  }
+
+  if (!name || typeof name !== "string" || name.trim().length === 0) {
+    throw new Error("Name is required");
+  }
+
+  if (!price) {
+    throw new Error("Price is required");
+  }
+
+  if (!stock) {
+    throw new Error("Stock is required");
+  }
+
+  try {
+    const plant = await prisma.plant.update({
+      where: { id },
+      data: {
+        name,
+        category,
+        price,
+        stock,
+        description,
+        userId,
+      },
+    });
+
+    return { success: true };
+  } catch (error: any) {
     throw error;
   }
 
@@ -120,5 +188,3 @@ export async function deletePlant(id: string) {
     return { success: false, error: "Unable to delete plant" };
   }
 }
-
-export async function editPlant(formData: FormData) {}

@@ -64,7 +64,7 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="relative w-full flex items-center justify-center h-full"
         >
-          <Plant3D />
+          {/* <Plant3D /> */}
 
           {/* Soft decorative glow */}
           <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-green-700/10 rounded-full blur-3xl" />

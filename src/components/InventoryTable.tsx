@@ -12,20 +12,22 @@ import {
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { ComboBox } from "./ui/ComboBox";
-import { Search, Trash2Icon, PencilIcon } from "lucide-react";
+import { Search, Trash2Icon, PencilIcon, Sprout } from "lucide-react";
 
 import { useEffect, useState } from "react";
 import { PlantType } from "@/lib/types";
-import { deletePlant, getPlants } from "@/actions/plant.action";
+import { deletePlant, getPlants, updatePlant } from "@/actions/plant.action";
 import { useRouter } from "next/navigation";
 
-import { AddPlant } from "./PlantForm";
+import { PlantFormDialog } from "./PlantForm";
 
 export default function InventoryTable() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [plants, setPlants] = useState<PlantType[]>([]);
+  const [editingPlant, setEditingPlant] = useState<PlantType | null>(null);
+  const [formOpen, setFormOpen] = useState<boolean>(false);
 
   const fetchPlants = async () => {
     const data = await getPlants(searchTerm);
@@ -53,6 +55,11 @@ export default function InventoryTable() {
     } else alert("Failed to delete Plant.");
   };
 
+  const handleEdit = (plant: PlantType) => {
+    setEditingPlant(plant);
+    setFormOpen(true);
+  };
+
   return (
     <div className="px-8 py-4 w-full">
       <div className="flex items-center justify-between">
@@ -74,8 +81,24 @@ export default function InventoryTable() {
           />
         </div>
 
-        {/* Add new Plants */}
-        <AddPlant onPlantAdded={() => fetchPlants()} />
+        {/* Add button -> opens form for creating */}
+        <Button
+          variant="outline"
+          onClick={() => {
+            setEditingPlant(null);
+            setFormOpen(true);
+          }}
+        >
+          <Sprout className="text-green-800 hover:cursor-pointer" /> Add Plant
+        </Button>
+
+        {/* Reusable Add/Edit Form */}
+        <PlantFormDialog
+          initialPlant={editingPlant}
+          onPlantSaved={() => fetchPlants()}
+          open={formOpen}
+          onOpenChange={setFormOpen}
+        />
       </div>
 
       <div className="grid w-full [&>div]:max-h-screen [&>div]:border [&>div]:rounded">
@@ -120,7 +143,12 @@ export default function InventoryTable() {
                   </TableCell>
 
                   <TableCell className="w-full flex justify-end items-center gap-x-2">
-                    <Button variant="outline" size="default" title="Edit">
+                    <Button
+                      variant="outline"
+                      size="default"
+                      title="Edit"
+                      onClick={() => handleEdit(plant)}
+                    >
                       <PencilIcon className="h-4 w-4" />
                       Edit
                     </Button>

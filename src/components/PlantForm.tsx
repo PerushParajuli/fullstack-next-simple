@@ -18,13 +18,24 @@ import { ComboBox } from "./ui/ComboBox";
 import { useState } from "react";
 
 import { Textarea } from "./ui/textarea";
-import { addNewPlant } from "@/actions/plant.action";
+import { addNewPlant, updatePlant } from "@/actions/plant.action";
+import { PlantType } from "@/lib/types";
 
-export function AddPlant({ onPlantAdded }: { onPlantAdded: () => void }) {
-  const [requestId] = useState(() => crypto.randomUUID()); // generated a unique ID when dialouge opens
+export function PlantFormDialog({
+  onPlantSaved,
+  initialPlant,
+  onOpenChange,
+  open,
+}: {
+  onPlantSaved: () => void;
+  initialPlant?: PlantType | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const [category, selectedCategory] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [open, setOpen] = useState<boolean>(false);
+
+  const isEditing = !!initialPlant; // Converting truthy and falsy to actual boolean value
 
   // ensures that only one submission is made at a time
   const handleSubmit = async (formData: FormData) => {
@@ -32,31 +43,31 @@ export function AddPlant({ onPlantAdded }: { onPlantAdded: () => void }) {
 
     setIsSubmitting(true);
 
-    formData.set("requestId", requestId);
-
-    const result = await addNewPlant(formData);
-    setIsSubmitting(false);
-
-    if (result?.success) {
-      setOpen(false);
-      onPlantAdded();
+    if (isEditing) {
+      formData.set("id", initialPlant!.id); // I promise initialPlant is NOT null here.
+      await updatePlant(formData);
+    } else {
+      formData.set("requestId", crypto.randomUUID());
+      const result = await addNewPlant(formData);
     }
+    setIsSubmitting(false);
+    onOpenChange(false);
+    onPlantSaved();
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" disabled={open}>
-          <Sprout className="text-green-800 hover:cursor-pointer" /> Add Plant
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         {/* Actions to be taken */}
         <form action={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Add a Plant</DialogTitle>
+            <DialogTitle>
+              {isEditing ? "Edit Plant" : "Add a Plant"}
+            </DialogTitle>
             <DialogDescription>
-              Fill out the form below to add a new plant to your inventory.
+              {isEditing
+                ? "Update the plant details below."
+                : "Fill out the form below to add a new plant to your inventory."}
             </DialogDescription>
           </DialogHeader>
 
@@ -64,7 +75,13 @@ export function AddPlant({ onPlantAdded }: { onPlantAdded: () => void }) {
           <div className="grid grid-cols-2 place-items-center gap-y-4 pt-4">
             <div className="grid gap-3">
               <Label htmlFor="name">Name</Label>
-              <Input id="name" name="name" placeholder="Peace Lily" required />
+              <Input
+                id="name"
+                name="name"
+                placeholder="Peace Lily"
+                required
+                defaultValue={initialPlant?.name ?? ""}
+              />
             </div>
             <div className="grid gap-3">
               <Label htmlFor="category">Category</Label>
@@ -72,7 +89,13 @@ export function AddPlant({ onPlantAdded }: { onPlantAdded: () => void }) {
                 value={category}
                 onChange={(value) => selectedCategory(value)}
               />
-              <Input type="hidden" name="category" value={category} required />
+              <Input
+                type="hidden"
+                name="category"
+                value={category}
+                required
+                defaultValue={initialPlant?.category ?? ""}
+              />
             </div>
           </div>
 
@@ -85,6 +108,7 @@ export function AddPlant({ onPlantAdded }: { onPlantAdded: () => void }) {
                 name="description"
                 placeholder="Describe your plant"
                 className="overflow-y-auto max-h-20"
+                defaultValue={initialPlant?.description ?? ""}
               />
             </div>
 
@@ -96,7 +120,7 @@ export function AddPlant({ onPlantAdded }: { onPlantAdded: () => void }) {
                   type="number"
                   name="price"
                   id="price"
-                  defaultValue={0}
+                  defaultValue={initialPlant?.price ?? 0}
                   required
                 />
               </div>
@@ -107,7 +131,7 @@ export function AddPlant({ onPlantAdded }: { onPlantAdded: () => void }) {
                   type="number"
                   name="stock"
                   id="stock"
-                  defaultValue={1}
+                  defaultValue={initialPlant?.stock ?? 0}
                   required
                 />
               </div>
@@ -118,7 +142,7 @@ export function AddPlant({ onPlantAdded }: { onPlantAdded: () => void }) {
               <Button variant="outline">Cancel</Button>
             </DialogClose>
             <Button type="submit" disabled={!category}>
-              Submit
+              {isEditing ? "Save Changes" : "Submit"}
             </Button>
           </DialogFooter>
         </form>

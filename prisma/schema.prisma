@@ -9,25 +9,20 @@ datasource db {
 }
 
 /// ----------------------------------------------------------------------
-/// Plant model (Internal)
+/// Plant model (Internal) - model currently assumes ONE entry per product, not multiple.
 /// ----------------------------------------------------------------------
-
 model Plant {
-  id String @id @default(uuid())
-
+  id          String   @id @default(uuid())
   name        String
   description String?
   category    String
   stock       Int
   price       Float
-
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  userId      String
+  imageUrl    String?
+  requestId   String   @unique
 
-  // The Foreign Key column
-  userId String
-
-  imageUrl String?
-
-  requestId String @unique // Prevents duplicate request
+  @@unique([userId, name, category], name: "userId_name_category")
 }
